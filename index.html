@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1a1410" />
+  <title>The Orb</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+  <!-- ============================ BOOT ============================ -->
+  <div id="screen-boot" class="screen active">
+    <div class="boot-inner">
+      <div class="boot-title">THE ORB</div>
+      <div class="boot-spinner"></div>
+    </div>
+  </div>
+
+  <!-- ============================ AUTH ============================ -->
+  <div id="screen-auth" class="screen">
+    <div class="panel auth-panel">
+      <div class="panel-title" id="auth-title">ENTER</div>
+      <input id="auth-username" class="pixel-input" type="text"
+             placeholder="username" autocomplete="username" />
+      <input id="auth-password" class="pixel-input" type="password"
+             placeholder="password" autocomplete="current-password" />
+      <div id="auth-error" class="auth-error"></div>
+      <button id="auth-submit" class="pixel-btn">SIGN IN</button>
+      <div class="auth-toggle">
+        <span id="auth-toggle-text">No account?</span>
+        <button id="auth-toggle-btn" class="link-btn">Create one</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= ONBOARDING ========================= -->
+  <div id="screen-onboarding" class="screen">
+    <div class="panel onboarding-panel">
+      <div class="panel-title">SETUP</div>
+      <label class="field-label">What are you tracking?</label>
+      <input id="ob-habit" class="pixel-input" type="text" placeholder="habit name" />
+
+      <label class="field-label">Cost per instance (coins)</label>
+      <input id="ob-cost" class="pixel-input" type="number" inputmode="numeric" value="24" />
+
+      <label class="field-label">Estimated daily count</label>
+      <input id="ob-estimate" class="pixel-input" type="number" inputmode="numeric" placeholder="e.g. 20" />
+
+      <label class="field-label">Your name</label>
+      <input id="ob-name" class="pixel-input" type="text" placeholder="display name" />
+
+      <label class="field-label">Today's date</label>
+      <input id="ob-date" class="pixel-input" type="date" />
+
+      <div id="ob-error" class="auth-error"></div>
+      <button id="ob-submit" class="pixel-btn">BEGIN</button>
+    </div>
+  </div>
+
+  <!-- ============================ MAIN ============================ -->
+  <div id="screen-main" class="screen">
+    <img id="bg" class="bg" src="ImageUpload/BG.png" alt="" />
+
+    <button id="btn-menu" class="menu-btn" aria-label="Menu">&#8942;</button>
+
+    <div id="orb-layer" class="orb-layer"></div>
+
+    <div id="debt-orb-zone" class="debt-orb-zone"></div>
+
+    <div id="bottom-row" class="bottom-row">
+      <button id="bag-btn" class="bag-btn" aria-label="Coin bag">
+        <img id="bag-img" class="bag-img" src="ImageUpload/Bag_Tier1.png" alt="" />
+        <span id="bag-total" class="bag-total">0</span>
+        <span id="coin-float" class="coin-float"></span>
+      </button>
+
+      <div id="avatar-container" class="avatar-container">
+        <img id="avatar-a" class="avatar-img active" src="ImageUpload/Avater_Baseline.png" alt="" />
+        <img id="avatar-b" class="avatar-img" alt="" />
+        <div id="avatar-flash" class="avatar-flash"></div>
+      </div>
+
+      <button id="window-btn" class="window-btn" aria-label="End day window">
+        <img id="window-img" class="window-img" src="ImageUpload/Window_Noon.png" alt="" />
+      </button>
+    </div>
+
+    <div id="test-toolbar" class="test-toolbar"></div>
+
+    <button id="release-btn" class="release-btn">RELEASE ORB</button>
+
+    <button id="action-btn" class="action-btn" aria-label="Log instance">
+      <img id="action-img" class="action-img" src="ImageUpload/Button_Idle.png" alt="" />
+    </button>
+  </div>
+
+  <!-- =========================== OVERLAYS =========================== -->
+  <div id="overlay-root" class="overlay-root"></div>
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

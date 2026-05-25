@@ -2,7 +2,7 @@
 
 import { state, threshold } from "./state.js";
 
-const BAG_SRC = (tier) => `assets/bags/Bag_Tier${tier}.png`;
+const BAG_SRC = (tier) => `ImageUpload/Bag_Tier${tier}.png`;
 
 // EOD coins for a manual day: remaining_orbs * threshold * cost_per_instance.
 export function calculateEODCoins(remainingOrbs) {

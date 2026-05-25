@@ -9,10 +9,10 @@ import { confirmModal, showOverlay, hideOverlay, el } from "./ui.js";
 import { runManualEOD } from "./eod.js";
 
 const WINDOW_SRC = {
-  morning: "assets/windows/Window_Morning.png",
-  noon: "assets/windows/Window_Noon.png",
-  evening: "assets/windows/Window_Evening.png",
-  night: "assets/windows/Window_Night.png",
+  morning: "ImageUpload/Window_Morning.png",
+  noon: "ImageUpload/Window_Noon.png",
+  evening: "ImageUpload/Window_Evening.png",
+  night: "ImageUpload/Window_Night.png",
 };
 
 let clockTimer = null;

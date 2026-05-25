@@ -4,15 +4,15 @@
 import { clamp } from "./util.js";
 
 const STATE_SRC = {
-  4: "assets/avatars/Avatar_Thriving_4.png",
-  3: "assets/avatars/Avatar_Thriving_3.png",
-  2: "assets/avatars/Avatar_Thriving_2.png",
-  1: "assets/avatars/Avatar_Thriving_1.png",
-  0: "assets/avatars/Avatar_Baseline.png",
-  "-1": "assets/avatars/Avatar_Struggling_1.png",
-  "-2": "assets/avatars/Avatar_Struggling_2.png",
-  "-3": "assets/avatars/Avatar_Struggling_3.png",
-  "-4": "assets/avatars/Avatar_Struggling_4.png",
+  4: "ImageUpload/Avater_Thriving_4.png",
+  3: "ImageUpload/Avater_Thriving_3.png",
+  2: "ImageUpload/Avater_Thriving_2.png",
+  1: "ImageUpload/Avater_Thriving_1.png",
+  0: "ImageUpload/Avater_Baseline.png",
+  "-1": "ImageUpload/Avatar_Struggling_1.png",
+  "-2": "ImageUpload/Avatar_Struggling_2.png",
+  "-3": "ImageUpload/Avatar_Struggling_3.png",
+  "-4": "ImageUpload/Avatar_Struggling_4.png",
 };
 
 let frontIsA = true;

@@ -4,7 +4,7 @@
 
 import { lerp, randRange, randInt } from "./util.js";
 
-const ORB_SRC = "assets/Orb.png";
+const ORB_SRC = "ImageUpload/Orb.png";
 const DRIFT = 0.012; // lerp factor per frame for idle drift
 const ARRIVE = 0.6; // fraction of orb size considered "arrived"
 

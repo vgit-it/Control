@@ -100,7 +100,7 @@ function hideReleaseButton() {
 function pressVisual(down) {
   const img = document.getElementById("action-img");
   const btn = document.getElementById("action-btn");
-  img.src = down ? "assets/buttons/Button_Pressed.png" : "assets/buttons/Button_Idle.png";
+  img.src = down ? "ImageUpload/Button_Pressed.png" : "ImageUpload/Button_Idle.png";
   btn.classList.toggle("idle", !down);
 }
 
@@ -156,10 +156,10 @@ export function refreshActionButtonState() {
   if (effectivelyOffline()) {
     btn.classList.add("disabled");
     btn.classList.remove("idle");
-    img.src = "assets/buttons/Button_Disabled.png";
+    img.src = "ImageUpload/Button_Disabled.png";
   } else {
     btn.classList.remove("disabled");
     btn.classList.add("idle");
-    img.src = "assets/buttons/Button_Idle.png";
+    img.src = "ImageUpload/Button_Idle.png";
   }
 }

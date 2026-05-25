@@ -12,12 +12,12 @@
 // Replace the placeholder values below with your project's config.
 
 export const firebaseConfig = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME.firebaseapp.com",
-  projectId: "REPLACE_ME",
-  storageBucket: "REPLACE_ME.appspot.com",
-  messagingSenderId: "REPLACE_ME",
-  appId: "REPLACE_ME",
+  apiKey: "AIzaSyB9M2tvdurZdhDq3iUJChu3widjqMpe1IY",
+  authDomain: "control-76d7e.firebaseapp.com",
+  projectId: "control-76d7e",
+  storageBucket: "control-76d7e.firebasestorage.app",
+  messagingSenderId: "120759276333",
+  appId: "1:120759276333:web:1135c5d1e5f1706c8a79a4"
 };
 
 // Email used for the pre-seeded Test account (see PRD section 17).

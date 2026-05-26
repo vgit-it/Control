@@ -14,7 +14,7 @@
   --border-dark: #0f0b08;
   --border-light: #6b5436;
 
-  --orb-size: 13vmin;
+  --orb-size: 9vmin;
   --debt-orb-size: 9vmin;
 }
 
@@ -192,6 +192,9 @@ img {
 #screen-main {
   padding: 0;
   background: var(--bg-dark);
+  top: auto;
+  aspect-ratio: 512 / 768;
+  max-height: 100%;
 }
 
 .bg {
@@ -249,7 +252,8 @@ img {
   width: 100%;
   height: 100%;
   display: block;
-  filter: drop-shadow(0 0 6px rgba(255, 207, 107, 0.6));
+  filter: sepia(0.65) saturate(4) hue-rotate(-15deg) brightness(1.35)
+          drop-shadow(0 0 10px rgba(255, 160, 40, 0.85));
 }
 .orb.debt {
   width: var(--debt-orb-size);
@@ -350,8 +354,8 @@ img {
 
 .avatar-container {
   position: relative;
-  width: 34vmin;
-  height: 34vmin;
+  width: 52vmin;
+  height: 52vmin;
   animation: levitate 4s ease-in-out infinite;
 }
 @keyframes levitate {

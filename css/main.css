@@ -284,6 +284,22 @@ img {
   background: var(--red);
 }
 
+.trail-mote {
+  position: absolute;
+  width: var(--orb-size);
+  height: var(--orb-size);
+  margin-left: calc(var(--orb-size) / -2);
+  margin-top: calc(var(--orb-size) / -2);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%,
+    rgba(255, 230, 150, 0.9),
+    rgba(255, 140, 30, 0.55) 55%,
+    transparent 82%);
+  box-shadow: 0 0 14px rgba(255, 160, 40, 0.85), 0 0 28px rgba(255, 110, 20, 0.35);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
 /* ---------------- Bottom row ---------------- */
 .bottom-row {
   position: absolute;

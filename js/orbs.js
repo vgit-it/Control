@@ -168,6 +168,22 @@ const NEAR_SCALE = 1.35; // z=1 scale (closest to screen)
 function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
 function easeIn(t)  { return t * t * t; }
 
+function spawnTrailMote(container, x, y, scale) {
+  const m = document.createElement("div");
+  m.className = "trail-mote";
+  m.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+  m.style.opacity = "0.7";
+  container.appendChild(m);
+  const start = performance.now();
+  function fade(now) {
+    const t = Math.min(1, (now - start) / 480);
+    m.style.opacity = String(0.7 * (1 - t));
+    if (t < 1) requestAnimationFrame(fade);
+    else m.remove();
+  }
+  requestAnimationFrame(fade);
+}
+
 function centerOf(elId) {
   const r = document.getElementById(elId).getBoundingClientRect();
   return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
@@ -232,6 +248,7 @@ export async function absorbOneToButton() {
   const ey = c.y - rect.top;
   await new Promise((resolve) => {
     const t0 = performance.now();
+    let lastTrail = 0;
     function p2(now) {
       const t = Math.min(1, (now - t0) / 350);
       const e = easeIn(t);
@@ -240,6 +257,10 @@ export async function absorbOneToButton() {
       const sc = lerp(NEAR_SCALE, 0, e);
       o.el.style.transform = `translate(${x}px, ${y}px) scale(${sc})`;
       o.el.style.opacity = String(1 - e);
+      if (now - lastTrail > 25) {
+        spawnTrailMote(layer, x, y, Math.max(0.05, sc));
+        lastTrail = now;
+      }
       if (t < 1) requestAnimationFrame(p2); else resolve();
     }
     requestAnimationFrame(p2);
@@ -278,6 +299,7 @@ export function releaseNormalOrb() {
       const ey = dest.y * rect.height;
       const destScale = 0.6 + dest.z * 0.75;
       const t1 = performance.now();
+      let lastTrail = 0;
       function p2(now2) {
         const t2 = Math.min(1, (now2 - t1) / 350);
         const e2 = easeIn(t2);
@@ -286,6 +308,10 @@ export function releaseNormalOrb() {
         const sc2 = lerp(NEAR_SCALE, destScale, e2);
         o.el.style.transform = `translate(${x}px, ${y}px) scale(${sc2})`;
         o.el.style.opacity = "1";
+        if (now2 - lastTrail > 25) {
+          spawnTrailMote(layer, x, y, sc2);
+          lastTrail = now2;
+        }
         if (t2 < 1) {
           requestAnimationFrame(p2);
         } else {

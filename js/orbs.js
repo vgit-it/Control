@@ -8,6 +8,7 @@ import { lerp, randRange, randInt } from "./util.js";
 const ORB_SRC = "ImageUpload/Orb.png";
 const DRIFT = 0.012;           // lerp factor for consumed orb idle drift
 const RING_SPEED = 0.25;       // radians/second (~25 s per full orbit)
+const OFFSET_LERP = 4.0;       // rad/s angular lerp for smooth equidistant recalculation
 const RING_BASE_SCALE = 0.385; // ring orbs: 55% * 0.7 (30% smaller than previous)
 const NEAR_SCALE = 1.35;       // zoom-toward-screen peak scale
 
@@ -15,8 +16,9 @@ let ringLayer;       // #orb-layer, z-index 8  — ring orbs live here
 let consumedLayer;   // #consumed-orb-layer, z-index 22 — consumed orbs live here
 let ringOrbs = [];
 let consumedOrbs = [];
+let ringOrbsTotal = 0; // total ring orbs for this day (= dailyMax), for radius scaling
 let ringAngle = 0;
-let ringPaused = false; // suspend orbit during consume/release transitions
+let ringPaused = false; // suspend orbit during release transitions
 let rafId = null;
 let lastTime = 0;
 
@@ -30,14 +32,19 @@ function rectOf(container) {
   return container.getBoundingClientRect();
 }
 
-// Circle center at 1/3 height of avatar, radius = 35% of avatar width (half * 0.7).
-function getCircleParams() {
+// Circle center at 1/3 height of avatar; radius scales with remaining ring orbs.
+// countOverride: treat as if this many ring orbs exist (for release pre-computation).
+function getCircleParams(countOverride) {
   const layerRect = rectOf(ringLayer);
   const av = document.getElementById("avatar-container").getBoundingClientRect();
+  const baseRadius = av.width * 0.35;
+  const n = countOverride !== undefined ? countOverride : ringOrbs.length;
+  const ratio = ringOrbsTotal > 0 ? n / ringOrbsTotal : 0;
+  const radius = baseRadius * (0.5 + 0.5 * ratio);
   return {
     cx: av.left + av.width / 2 - layerRect.left,
     cy: av.top + av.height * (1 / 3) - layerRect.top,
-    radius: av.width * 0.35,
+    radius,
   };
 }
 
@@ -83,6 +90,12 @@ function updateMotes(orbObj, dt) {
 function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
 function easeIn(t)  { return t * t * t; }
 
+// Lerp angle along shortest arc, capped at rate*dt radians per frame.
+function lerpAngle(current, target, rate, dt) {
+  const diff = ((target - current + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  return current + Math.sign(diff) * Math.min(Math.abs(diff), rate * dt);
+}
+
 function spawnTrailMote(container, x, y, scale, consumed = false) {
   const m = document.createElement("div");
   m.className = consumed ? "trail-mote consumed" : "trail-mote";
@@ -119,7 +132,9 @@ function tick(now) {
     const n = ringOrbs.length;
     ringOrbs.forEach((o, i) => {
       if (o.frozen) return;
-      const angle = ringAngle + i * ((2 * Math.PI) / n);
+      const targetOffset = i * ((2 * Math.PI) / n);
+      o.orbitOffset = lerpAngle(o.orbitOffset, targetOffset, OFFSET_LERP, dt);
+      const angle = ringAngle + o.orbitOffset;
       const x = cx + radius * Math.cos(angle);
       const y = cy + radius * Math.sin(angle);
       o.currentX = x;
@@ -178,10 +193,10 @@ export function consumedOrbCount() { return consumedOrbs.length; }
 
 // ─── Spawning ─────────────────────────────────────────────────────────────────
 
-function addRingOrb() {
+function addRingOrb(orbitOffset = 0) {
   const { orb, motes } = makeOrbEl(); // plain .orb — golden filter
   ringLayer.appendChild(orb);
-  const o = { el: orb, motes, currentX: 0, currentY: 0, frozen: false };
+  const o = { el: orb, motes, currentX: 0, currentY: 0, frozen: false, orbitOffset };
   ringOrbs.push(o);
   return o;
 }
@@ -195,10 +210,12 @@ function addConsumedOrb(pos) {
   return o;
 }
 
-// Clears everything, spawns count golden ring orbs.
-export function spawnRingOrbs(count) {
+// Clears everything, spawns count golden ring orbs. total = dailyMax for radius scaling.
+export function spawnRingOrbs(count, total = count) {
   clearAll();
-  for (let i = 0; i < count; i++) addRingOrb();
+  ringOrbsTotal = Math.max(1, total);
+  const step = count > 0 ? (2 * Math.PI) / count : 0;
+  for (let i = 0; i < count; i++) addRingOrb(i * step);
 }
 
 // Spawns count consumed (purple) orbs at random positions (session restore).
@@ -211,31 +228,43 @@ export function spawnConsumedOrbs(count) {
 
 export async function consumeOneOrb() {
   if (ringOrbs.length === 0) return;
-  ringPaused = true;
+  // Capture center BEFORE removing — ring keeps orbiting during the animation.
+  const { cx, cy, radius } = getCircleParams();
   const o = ringOrbs.pop();
   o.frozen = true;
 
   const sx = o.currentX;
   const sy = o.currentY;
 
-  // Phase 1: zoom toward screen, 750ms ease-out
+  // Radial outward direction from circle center through orb's current position.
+  const dx = sx - cx;
+  const dy = sy - cy;
+  const dist = Math.hypot(dx, dy) || 1;
+  const p1x = cx + (dx / dist) * radius * 1.8;
+  const p1y = cy + (dy / dist) * radius * 1.8;
+
+  // Phase 1: move radially outward + zoom toward screen, 750ms ease-out.
   await new Promise((resolve) => {
     const t0 = performance.now();
+    let lastTrail = 0;
     function p1(now) {
       const t = Math.min(1, (now - t0) / 750);
       const e = easeOut(t);
+      const x = lerp(sx, p1x, e);
+      const y = lerp(sy, p1y, e);
       const sc = lerp(RING_BASE_SCALE, NEAR_SCALE, e);
-      o.el.style.transform = `translate(${sx}px, ${sy}px) scale(${sc})`;
+      o.el.style.transform = `translate(${x}px, ${y}px) scale(${sc})`;
       o.el.style.opacity = "1";
+      if (now - lastTrail > 25) { spawnTrailMote(ringLayer, x, y, sc); lastTrail = now; }
       if (t < 1) requestAnimationFrame(p1);
       else resolve();
     }
     requestAnimationFrame(p1);
   });
 
-  // Phase 2: fly to random free-float destination, 350ms ease-in + golden trail
+  // Phase 2: fly to random free-float destination, 350ms ease-in + golden trail.
   const dest = rand2D();
-  const layerRect = rectOf(ringLayer); // same coord space as consumedLayer
+  const layerRect = rectOf(ringLayer);
   const ex = dest.x * layerRect.width;
   const ey = dest.y * layerRect.height;
   const destScale = 0.6 + dest.z * 0.75;
@@ -246,8 +275,8 @@ export async function consumeOneOrb() {
     function p2(now) {
       const t = Math.min(1, (now - t0) / 350);
       const e = easeIn(t);
-      const x = lerp(sx, ex, e);
-      const y = lerp(sy, ey, e);
+      const x = lerp(p1x, ex, e);
+      const y = lerp(p1y, ey, e);
       const sc = lerp(NEAR_SCALE, destScale, e);
       o.el.style.transform = `translate(${x}px, ${y}px) scale(${sc})`;
       o.el.style.opacity = "1";
@@ -258,14 +287,13 @@ export async function consumeOneOrb() {
     requestAnimationFrame(p2);
   });
 
-  // Transition: switch to consumed layer and class (same coord system — no offset needed)
+  // Transition: switch to consumed layer and class.
   o.el.classList.add("consumed");
   consumedLayer.appendChild(o.el);
   o.pos = { ...dest };
   o.target = rand2D();
   o.frozen = false;
   consumedOrbs.push(o);
-  ringPaused = false;
 }
 
 // ─── Release (long-press) ─────────────────────────────────────────────────────
@@ -283,10 +311,12 @@ export async function releaseOneConsumedOrb() {
   const sy = o.pos.y * consumedRect.height;
   const baseScale = 0.6 + o.pos.z * 0.75;
 
-  // Compute the ring position this orb will occupy when it joins
-  const { cx, cy, radius } = getCircleParams();
+  // Compute the ring position this orb will occupy when it joins (use post-release radius).
   const newCount = ringOrbs.length + 1;
-  const targetAngle = ringAngle + ringOrbs.length * ((2 * Math.PI) / newCount);
+  const { cx, cy, radius } = getCircleParams(newCount);
+  const newOrbIndex = ringOrbs.length;
+  const targetRelOffset = newOrbIndex * ((2 * Math.PI) / newCount);
+  const targetAngle = ringAngle + targetRelOffset;
   const targetX = cx + radius * Math.cos(targetAngle);
   const targetY = cy + radius * Math.sin(targetAngle);
 
@@ -324,11 +354,12 @@ export async function releaseOneConsumedOrb() {
     requestAnimationFrame(p2);
   });
 
-  // Transition: switch to ring layer and remove consumed class
+  // Transition: switch to ring layer; set orbitOffset to match landing angle.
   o.el.classList.remove("consumed");
   ringLayer.appendChild(o.el);
   o.currentX = targetX;
   o.currentY = targetY;
+  o.orbitOffset = targetRelOffset;
   o.frozen = false;
   ringOrbs.push(o);
   ringPaused = false;

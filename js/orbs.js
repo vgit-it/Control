@@ -255,7 +255,8 @@ export function getRingOrbLevels() {
 
 function addRingOrb(level, orbitOffset = 0) {
   const { orb, motes } = makeOrbEl(`level-${level}`);
-  ringLayer.appendChild(orb);
+  // L1 behind avatar, L2+L3 in front (consumed-orb-layer has higher z-index).
+  (level === 1 ? ringLayer : consumedLayer).appendChild(orb);
   const levelOrbs = level === 1 ? level1RingOrbs : level === 2 ? level2RingOrbs : level3RingOrbs;
   const o = { el: orb, motes, currentX: 0, currentY: 0, frozen: false, orbitOffset, level };
   levelOrbs.push(o);
@@ -443,10 +444,10 @@ export async function releaseOneConsumedOrb() {
     requestAnimationFrame(p2);
   });
 
-  // Transition: switch back to ring layer; restore level class for visual styling.
+  // Transition: restore level class; L1 goes behind avatar, L2/L3 stay in front.
   o.el.classList.remove("consumed");
   o.el.classList.add(`level-${orbLevel}`);
-  ringLayer.appendChild(o.el);
+  (orbLevel === 1 ? ringLayer : consumedLayer).appendChild(o.el);
   o.currentX = targetX;
   o.currentY = targetY;
   o.orbitOffset = targetRelOffset;

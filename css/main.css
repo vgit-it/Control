@@ -464,7 +464,7 @@ img {
 .tod-overlay {
   position: absolute;
   inset: 0;
-  z-index: 8;
+  z-index: 21;
   pointer-events: none;
   transition: background-color 2s ease;
 }

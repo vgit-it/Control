@@ -16,7 +16,6 @@ import { checkBaselineLock, checkDrift, rollingAverage, getCurrentBaseline } fro
 import { checkRecalibration } from "./recalibration.js";
 import { isoDate, addDays } from "./util.js";
 
-const TOTAL_ORBS = 10;
 
 let daysCache = []; // all day records, oldest -> newest
 
@@ -35,7 +34,7 @@ export function lastNonMissedCount() {
 // Compute the orb level array for the next day based on surviving orb levels.
 function computeNextOrbLevels(survivingOrbLevels, count, dailyMax) {
   const overLimit = Math.max(0, count - dailyMax);
-  const nextTotal = overLimit > 0 ? Math.max(5, TOTAL_ORBS - overLimit) : TOTAL_ORBS;
+  const nextTotal = overLimit > 0 ? Math.max(Math.ceil(dailyMax / 2), dailyMax - overLimit) : dailyMax;
 
   if (survivingOrbLevels.length === 0) {
     return Array(nextTotal).fill(1);
@@ -119,9 +118,11 @@ export function beginNewDay() {
   state.count = 0;
   state.userData.currentCount = 0;
 
-  const orbLevels = state.userData.orbLevels;
+  const u = state.userData;
+  const orbLevels = (u.orbLevels?.length > 0) ? u.orbLevels : Array(u.dailyMax).fill(1);
+  if (u.orbLevels?.length === 0) u.orbLevels = orbLevels;
   const level1Total = orbLevels.filter((l) => l === 1).length;
-  const spentCount = TOTAL_ORBS - orbLevels.length;
+  const spentCount = u.dailyMax - orbLevels.length;
 
   orbs.spawnRingOrbs(orbLevels, level1Total);
   if (spentCount > 0) orbs.spawnSpentOrbs(spentCount);

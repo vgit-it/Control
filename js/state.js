@@ -33,6 +33,7 @@ export function defaultUserData(overrides = {}) {
     currentCount: 0, // instances logged so far on the in-progress day
     lastEODDate: null, // ISO date of the last completed (or caught-up) day
     onboardingComplete: false,
+    orbLevels: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // level (1-3) for each of today's 10 orbs, sorted ascending
     ...overrides,
   };
 }

@@ -259,6 +259,28 @@ img {
     drop-shadow(0 0 10px rgba(140, 80, 255, 0.85));
 }
 
+/* Level 2: silver / blue-white ring orbs (only when not consumed) */
+.orb:not(.consumed).level-2 img {
+  filter: sepia(0.2) saturate(2) hue-rotate(160deg) brightness(1.6)
+          drop-shadow(0 0 10px rgba(150, 200, 255, 0.85));
+}
+.orb:not(.consumed).level-2 .mote { background: rgba(150, 200, 255, 0.9); }
+
+/* Level 3: white / platinum ring orbs (only when not consumed) */
+.orb:not(.consumed).level-3 img {
+  filter: sepia(0.1) saturate(0.5) brightness(2.2)
+          drop-shadow(0 0 14px rgba(255, 255, 240, 0.95));
+}
+.orb:not(.consumed).level-3 .mote { background: rgba(255, 255, 220, 0.9); }
+
+/* Spent orbs: dark greyed-out visual for over-limit penalty days */
+.orb.spent { opacity: 0.4; }
+.orb.spent img {
+  filter: grayscale(1) brightness(0.4)
+          drop-shadow(0 0 4px rgba(80, 80, 80, 0.5));
+}
+.orb.spent .mote { background: rgba(100, 100, 100, 0.5); }
+
 /* particle motes */
 .mote {
   position: absolute;

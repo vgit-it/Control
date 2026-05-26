@@ -151,7 +151,7 @@ function restoreRoom() {
   const u = state.userData;
   const ringCount = Math.max(0, u.dailyMax - state.count);
   const consumedCount = Math.min(state.count, u.dailyMax);
-  orbs.spawnRingOrbs(ringCount);
+  orbs.spawnRingOrbs(ringCount, u.dailyMax);
   orbs.spawnConsumedOrbs(consumedCount);
   setAvatarState(u.currentState, false);
   coins.updateBagDisplay();

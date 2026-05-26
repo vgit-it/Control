@@ -192,7 +192,7 @@ img {
 #screen-main {
   padding: 0;
   background: var(--bg-dark);
-  top: auto;
+  bottom: auto;
   aspect-ratio: 512 / 768;
   max-height: 100%;
 }
@@ -232,8 +232,8 @@ img {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 18vh;
-  height: 22vh;
+  bottom: 18%;
+  height: 22%;
   z-index: 12;
   pointer-events: none;
 }
@@ -287,7 +287,7 @@ img {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 16vh);
+  bottom: 16%;
   z-index: 20;
   display: flex;
   align-items: flex-end;
@@ -430,7 +430,7 @@ img {
 /* ---------------- Action button ---------------- */
 .action-btn {
   position: absolute;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 4vh);
+  bottom: 4%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 30;
@@ -469,7 +469,7 @@ img {
 
 .release-btn {
   position: absolute;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 32vh);
+  bottom: 32%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 31;
@@ -649,8 +649,8 @@ img {
    TEST TOOLBAR
    ============================================================ */
 .test-toolbar {
-  position: absolute;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 32vh);
+  position: fixed;
+  bottom: env(safe-area-inset-bottom, 0px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 35;

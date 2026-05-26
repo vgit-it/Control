@@ -41,6 +41,8 @@ img {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   -webkit-user-drag: none;
+  pointer-events: none;
+  -webkit-touch-callout: none;
 }
 
 /* ---------------- Screens ---------------- */
@@ -421,6 +423,14 @@ img {
   display: block;
 }
 
+.tod-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  transition: background-color 2s ease;
+}
+
 .bottom-row-spacer {
   width: 20vmin;
   min-width: 44px;
@@ -430,7 +440,8 @@ img {
 /* ---------------- Action button ---------------- */
 .action-btn {
   position: absolute;
-  bottom: 4%;
+  position: fixed;
+  bottom: 20vh;
   left: 50%;
   transform: translateX(-50%);
   z-index: 30;
@@ -469,7 +480,8 @@ img {
 
 .release-btn {
   position: absolute;
-  bottom: 32%;
+  position: fixed;
+  bottom: calc(20vh + 26vmin + 12px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 31;

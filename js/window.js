@@ -15,6 +15,13 @@ const WINDOW_SRC = {
   night: "ImageUpload/Window_Night.png",
 };
 
+const TOD_OVERLAY_COLOR = {
+  morning: "rgba(255, 190, 60, 0.12)",
+  noon:    "rgba(255, 240, 200, 0.06)",
+  evening: "rgba(180, 50, 10, 0.15)",
+  night:   "rgba(10, 20, 90, 0.28)",
+};
+
 let clockTimer = null;
 
 const _alphaCache = new Map();
@@ -44,11 +51,14 @@ async function isTappablePixel(img, clientX, clientY) {
 
 export function updateWindowImage() {
   const img = document.getElementById("window-img");
-  const newSrc = WINDOW_SRC[timeOfDay()];
+  const tod = timeOfDay();
+  const newSrc = WINDOW_SRC[tod];
   if (img.src !== newSrc) {
     _alphaCache.delete(img.src);
     img.src = newSrc;
   }
+  const overlay = document.getElementById("tod-overlay");
+  if (overlay) overlay.style.backgroundColor = TOD_OVERLAY_COLOR[tod];
 }
 
 export function startWindowClock() {

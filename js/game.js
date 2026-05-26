@@ -4,7 +4,6 @@
 import { state, effectivelyOffline } from "./state.js";
 import * as orbs from "./orbs.js";
 import { flashAvatar } from "./avatar.js";
-import { updateBagDisplay } from "./coins.js";
 import { saveUserData } from "./db.js";
 import { showToast } from "./ui.js";
 import { lastNonMissedCount } from "./eod.js";
@@ -22,12 +21,10 @@ export function resetDailyWarning() {
 // Debounced persistence of the in-progress count (so a same-day reopen restores).
 function persistProgress() {
   state.userData.currentCount = state.count;
-  state.userData.currentDebtOrbs = state.debtOrbs;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     saveUserData(state.uid, {
       currentCount: state.userData.currentCount,
-      currentDebtOrbs: state.userData.currentDebtOrbs,
     }).catch((e) => console.error("persist progress failed", e));
   }, 800);
 }
@@ -54,18 +51,7 @@ function onTap() {
     return;
   }
   state.count += 1;
-
-  if (state.count > state.userData.dailyMax) {
-    // Over the daily max: spawn a debt orb, deduct coins immediately, flash.
-    orbs.spawnDebtOrb();
-    state.debtOrbs += 1;
-    state.userData.lifetimeCoins -= state.userData.costPerInstance;
-    updateBagDisplay();
-    flashAvatar();
-  } else if (orbs.normalOrbCount() > 0) {
-    orbs.absorbOneToButton();
-  }
-
+  if (orbs.ringOrbCount() > 0) orbs.consumeOneOrb();
   intraDayWarning();
   persistProgress();
 }
@@ -73,19 +59,8 @@ function onTap() {
 async function onRelease() {
   hideReleaseButton();
   if (state.count <= 0) return;
-
-  if (state.debtOrbs > 0) {
-    const removed = await orbs.releaseDebtOrb();
-    if (removed) {
-      state.debtOrbs -= 1;
-      state.userData.lifetimeCoins += state.userData.costPerInstance; // silent restore
-      updateBagDisplay();
-      state.count -= 1;
-    }
-  } else {
-    if (orbs.normalOrbCount() < 10) orbs.releaseNormalOrb();
-    state.count -= 1;
-  }
+  orbs.releaseOneConsumedOrb();
+  state.count -= 1;
   persistProgress();
 }
 

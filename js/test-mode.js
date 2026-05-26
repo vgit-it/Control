@@ -69,10 +69,6 @@ export function renderTestToolbar() {
     await persist();
   }));
 
-  body.appendChild(btn("Spawn debt orb", () => {
-    orbs.spawnDebtOrb();
-    state.debtOrbs += 1;
-  }));
   body.appendChild(btn("Simulate missed day", async () => {
     await eod.simulateMissedDay();
     showToast("Missed day simulated");

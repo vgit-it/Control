@@ -151,8 +151,7 @@ async function startApp() {
 // Rebuild the room to reflect the current in-progress day's progress.
 function restoreRoom() {
   const u = state.userData;
-  const absorbed = Math.min(10, Math.min(state.count, u.dailyMax));
-  const remaining = 10 - absorbed;
+  const remaining = Math.max(0, u.dailyMax - state.count);
   orbs.spawnOrbs(remaining);
   for (let i = 0; i < (state.debtOrbs || 0); i++) orbs.spawnDebtOrb();
   setAvatarState(u.currentState, false);

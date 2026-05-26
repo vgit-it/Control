@@ -163,7 +163,17 @@ export function debtOrbCount() {
   return debtOrbs.length;
 }
 
-// Helper: animate an orb element flying to a target client point, then run cb.
+const NEAR_SCALE = 1.35; // z=1 scale (closest to screen)
+
+function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+function easeIn(t)  { return t * t * t; }
+
+function centerOf(elId) {
+  const r = document.getElementById(elId).getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+// Helper: animate an orb element flying to a target client point (plain fly, no zoom-in).
 function flyTo(orbObj, container, clientX, clientY, { shrink = true, ms = 600 }) {
   return new Promise((resolve) => {
     orbObj.frozen = true;
@@ -177,7 +187,7 @@ function flyTo(orbObj, container, clientX, clientY, { shrink = true, ms = 600 })
 
     function step(now) {
       const t = Math.min(1, (now - start) / ms);
-      const e = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      const e = easeOut(t);
       const x = lerp(startX, endX, e);
       const y = lerp(startY, endY, e);
       const sc = shrink ? baseScale * (1 - 0.8 * e) : baseScale;
@@ -190,31 +200,103 @@ function flyTo(orbObj, container, clientX, clientY, { shrink = true, ms = 600 })
   });
 }
 
-function centerOf(elId) {
-  const r = document.getElementById(elId).getBoundingClientRect();
-  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-}
-
-// Single tap: absorb one random normal orb into the action button.
+// Single tap: absorb — phase 1: come closer (0.75s ease-out), phase 2: fly to button (0.35s ease-in).
 export async function absorbOneToButton() {
   if (normalOrbs.length === 0) return;
   const idx = randInt(0, normalOrbs.length - 1);
   const o = normalOrbs.splice(idx, 1)[0];
+  o.frozen = true;
+
+  const rect = rectOf(layer);
+  const sx = o.pos.x * rect.width;
+  const sy = o.pos.y * rect.height;
+  const baseScale = 0.6 + o.pos.z * 0.75;
+
+  // Phase 1: zoom toward screen (scale baseScale → NEAR_SCALE), 750ms ease-out
+  await new Promise((resolve) => {
+    const t0 = performance.now();
+    function p1(now) {
+      const t = Math.min(1, (now - t0) / 750);
+      const e = easeOut(t);
+      const sc = lerp(baseScale, NEAR_SCALE, e);
+      o.el.style.transform = `translate(${sx}px, ${sy}px) scale(${sc})`;
+      o.el.style.opacity = "1";
+      if (t < 1) requestAnimationFrame(p1); else resolve();
+    }
+    requestAnimationFrame(p1);
+  });
+
+  // Phase 2: fly to button and vanish, 350ms ease-in
   const c = centerOf("action-btn");
-  await flyTo(o, layer, c.x, c.y, { shrink: true, ms: 500 });
+  const ex = c.x - rect.left;
+  const ey = c.y - rect.top;
+  await new Promise((resolve) => {
+    const t0 = performance.now();
+    function p2(now) {
+      const t = Math.min(1, (now - t0) / 350);
+      const e = easeIn(t);
+      const x = lerp(sx, ex, e);
+      const y = lerp(sy, ey, e);
+      const sc = lerp(NEAR_SCALE, 0, e);
+      o.el.style.transform = `translate(${x}px, ${y}px) scale(${sc})`;
+      o.el.style.opacity = String(1 - e);
+      if (t < 1) requestAnimationFrame(p2); else resolve();
+    }
+    requestAnimationFrame(p2);
+  });
   o.el.remove();
 }
 
-// Long-press release with no debt: spawn one normal orb back into the room.
+// Long-press release — phase 1: appear at button and come closer (0.75s ease-out),
+// phase 2: fly to a random room position (0.35s ease-in), then drift freely.
 export function releaseNormalOrb() {
   const btn = centerOf("action-btn");
   const rect = rectOf(layer);
-  const startPos = {
-    x: (btn.x - rect.left) / rect.width,
-    y: (btn.y - rect.top) / rect.height,
-    z: 0.5,
-  };
-  addNormalOrb(startPos);
+  const sx = btn.x - rect.left;
+  const sy = btn.y - rect.top;
+  const startPos = { x: sx / rect.width, y: sy / rect.height, z: 0.1 };
+  const o = addNormalOrb(startPos);
+  o.frozen = true;
+  o.el.style.opacity = "0";
+
+  const startScale = 0.6 + 0.1 * 0.75; // z=0.1 → 0.675
+
+  // Phase 1: zoom toward screen, 750ms ease-out
+  const t0 = performance.now();
+  function p1(now) {
+    const t = Math.min(1, (now - t0) / 750);
+    const e = easeOut(t);
+    const sc = lerp(startScale, NEAR_SCALE, e);
+    o.el.style.transform = `translate(${sx}px, ${sy}px) scale(${sc})`;
+    o.el.style.opacity = String(e);
+    if (t < 1) {
+      requestAnimationFrame(p1);
+    } else {
+      // Phase 2: fly to random destination, 350ms ease-in
+      const dest = rand2D();
+      const ex = dest.x * rect.width;
+      const ey = dest.y * rect.height;
+      const destScale = 0.6 + dest.z * 0.75;
+      const t1 = performance.now();
+      function p2(now2) {
+        const t2 = Math.min(1, (now2 - t1) / 350);
+        const e2 = easeIn(t2);
+        const x = lerp(sx, ex, e2);
+        const y = lerp(sy, ey, e2);
+        const sc2 = lerp(NEAR_SCALE, destScale, e2);
+        o.el.style.transform = `translate(${x}px, ${y}px) scale(${sc2})`;
+        o.el.style.opacity = "1";
+        if (t2 < 1) {
+          requestAnimationFrame(p2);
+        } else {
+          o.pos = dest;
+          o.frozen = false;
+        }
+      }
+      requestAnimationFrame(p2);
+    }
+  }
+  requestAnimationFrame(p1);
 }
 
 // Long-press release with debt present: dissolve one debt orb.

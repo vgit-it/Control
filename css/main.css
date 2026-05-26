@@ -303,8 +303,8 @@ img {
 
 .bag-btn {
   position: relative;
-  width: 18vmin;
-  height: 18vmin;
+  width: 22.5vmin;
+  height: 22.5vmin;
   min-width: 44px;
   min-height: 44px;
   background: none;
@@ -358,15 +358,16 @@ img {
   position: relative;
   width: 52vmin;
   height: 52vmin;
-  animation: levitate 4s ease-in-out infinite;
+  transform-origin: bottom center;
+  animation: breathe 6s ease-in-out infinite;
 }
-@keyframes levitate {
+@keyframes breathe {
   0%,
   100% {
-    transform: translateY(0);
+    transform: scaleY(1);
   }
   50% {
-    transform: translateY(-8px);
+    transform: scaleY(1.04);
   }
 }
 .avatar-img {
@@ -441,7 +442,7 @@ img {
 .action-btn {
   position: absolute;
   position: fixed;
-  bottom: 20vh;
+  bottom: 8vh;
   left: 50%;
   transform: translateX(-50%);
   z-index: 30;
@@ -481,7 +482,7 @@ img {
 .release-btn {
   position: absolute;
   position: fixed;
-  bottom: calc(20vh + 26vmin + 12px);
+  bottom: calc(8vh + 26vmin + 12px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 31;

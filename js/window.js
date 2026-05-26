@@ -16,10 +16,10 @@ const WINDOW_SRC = {
 };
 
 const TOD_OVERLAY_COLOR = {
-  morning: "rgba(255, 190, 60, 0.12)",
-  noon:    "rgba(255, 240, 200, 0.06)",
-  evening: "rgba(180, 50, 10, 0.15)",
-  night:   "rgba(10, 20, 90, 0.28)",
+  morning: "rgba(255, 190, 60, 0.22)",
+  noon:    "rgba(255, 240, 200, 0.12)",
+  evening: "rgba(180, 50, 10, 0.28)",
+  night:   "rgba(10, 20, 90, 0.45)",
 };
 
 let clockTimer = null;

@@ -56,9 +56,9 @@ export function floatCoinLabel(amount) {
 export function animateCoinArc(amount) {
   const main = document.getElementById("screen-main");
   const bag = document.getElementById("bag-btn").getBoundingClientRect();
-  const avatar = document.getElementById("avatar-container").getBoundingClientRect();
-  const startX = avatar.left + avatar.width / 2;
-  const startY = avatar.top + avatar.height / 2;
+  const actionBtn = document.getElementById("action-btn").getBoundingClientRect();
+  const startX = actionBtn.left + actionBtn.width / 2;
+  const startY = actionBtn.top + actionBtn.height / 2;
   const endX = bag.left + bag.width / 2;
   const endY = bag.top + bag.height / 2;
 

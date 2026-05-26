@@ -44,7 +44,7 @@ function getOrbCenter() {
   const baseRadius = av.width * 0.35;
   return {
     cx: av.left + av.width / 2 - layerRect.left,
-    cy: av.top + av.height * (1 / 3) - layerRect.top,
+    cy: av.top + av.height * (1 / 4) - layerRect.top,
     baseRadius,
   };
 }

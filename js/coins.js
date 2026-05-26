@@ -4,10 +4,11 @@ import { state } from "./state.js";
 
 const BAG_SRC = (tier) => `ImageUpload/Bag_Tier${tier}.png`;
 
-// EOD coins: sum of each surviving orb's level-based value.
-// Level 1 = 1.0×, Level 2 = 1.25×, Level 3 = 1.5× costPerInstance.
+// EOD coins: base per-orb value = (initialDailyMax × costPerInstance) / currentDailyMax.
+// Level multipliers: L1 = 1.0×, L2 = 1.25×, L3 = 1.5×.
 export function calculateEODCoins(survivingOrbLevels) {
-  const base = state.userData.costPerInstance;
+  const u = state.userData;
+  const base = (u.onboardingEstimate * u.costPerInstance) / Math.max(1, u.dailyMax);
   const mult = [0, 1.0, 1.25, 1.5];
   return Math.round(survivingOrbLevels.reduce((s, l) => s + base * (mult[l] ?? 1.0), 0));
 }

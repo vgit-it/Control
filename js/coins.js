@@ -55,12 +55,13 @@ export function floatCoinLabel(amount) {
 // Arc a few coin sprites from a source point into the bag (manual EOD).
 export function animateCoinArc(amount) {
   const main = document.getElementById("screen-main");
+  const mainRect = main.getBoundingClientRect();
   const bag = document.getElementById("bag-btn").getBoundingClientRect();
   const actionBtn = document.getElementById("action-btn").getBoundingClientRect();
-  const startX = actionBtn.left + actionBtn.width / 2;
-  const startY = actionBtn.top + actionBtn.height / 2;
-  const endX = bag.left + bag.width / 2;
-  const endY = bag.top + bag.height / 2;
+  const startX = actionBtn.left + actionBtn.width / 2 - mainRect.left;
+  const startY = actionBtn.top + actionBtn.height / 2 - mainRect.top;
+  const endX = bag.left + bag.width / 2 - mainRect.left;
+  const endY = bag.top + bag.height / 2 - mainRect.top;
 
   const n = Math.min(8, Math.max(3, Math.round(amount / 50)));
   for (let i = 0; i < n; i++) {

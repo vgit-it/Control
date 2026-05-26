@@ -225,7 +225,7 @@ img {
 .orb-layer {
   position: absolute;
   inset: 0;
-  z-index: 10;
+  z-index: 22;
   pointer-events: none;
   overflow: hidden;
 }
@@ -745,6 +745,8 @@ img {
 /* ---------------- Flying coin (EOD) ---------------- */
 .fly-coin {
   position: absolute;
+  top: 0;
+  left: 0;
   width: 5vmin;
   height: 5vmin;
   border-radius: 50%;

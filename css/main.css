@@ -400,18 +400,27 @@ img {
 }
 
 .window-btn {
-  width: 20vmin;
-  height: 28vmin;
-  min-width: 44px;
-  min-height: 44px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   background: none;
   border: none;
   cursor: pointer;
+  padding: 0;
+  z-index: 5;
 }
 .window-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  display: block;
+}
+
+.bottom-row-spacer {
+  width: 20vmin;
+  min-width: 44px;
+  flex-shrink: 0;
 }
 
 /* ---------------- Action button ---------------- */

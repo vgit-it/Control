@@ -17,9 +17,38 @@ const WINDOW_SRC = {
 
 let clockTimer = null;
 
+const _alphaCache = new Map();
+
+async function _getCanvas(img) {
+  if (_alphaCache.has(img.src)) return _alphaCache.get(img.src);
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  canvas.getContext("2d").drawImage(img, 0, 0);
+  _alphaCache.set(img.src, canvas);
+  return canvas;
+}
+
+async function isTappablePixel(img, clientX, clientY) {
+  const rect = img.getBoundingClientRect();
+  const px = Math.round(((clientX - rect.left) / rect.width) * img.naturalWidth);
+  const py = Math.round(((clientY - rect.top) / rect.height) * img.naturalHeight);
+  try {
+    const canvas = await _getCanvas(img);
+    const [, , , a] = canvas.getContext("2d").getImageData(px, py, 1, 1).data;
+    return a > 10;
+  } catch {
+    return true;
+  }
+}
+
 export function updateWindowImage() {
   const img = document.getElementById("window-img");
-  img.src = WINDOW_SRC[timeOfDay()];
+  const newSrc = WINDOW_SRC[timeOfDay()];
+  if (img.src !== newSrc) {
+    _alphaCache.delete(img.src);
+    img.src = newSrc;
+  }
 }
 
 export function startWindowClock() {
@@ -30,7 +59,11 @@ export function startWindowClock() {
 
 export function initWindowButton() {
   const btn = document.getElementById("window-btn");
-  btn.addEventListener("click", onWindowTap);
+  const img = document.getElementById("window-img");
+  btn.addEventListener("click", async (e) => {
+    if (!(await isTappablePixel(img, e.clientX, e.clientY))) return;
+    onWindowTap();
+  });
 }
 
 async function onWindowTap() {

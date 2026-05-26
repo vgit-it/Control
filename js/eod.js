@@ -96,27 +96,23 @@ async function finalizeDay({ isMissed, remainingOrbs }) {
   u.currentDate = addDays(date, 1);
   u.currentDay = (u.currentDay || 1) + 1;
   u.currentCount = 0;
-  u.currentDebtOrbs = 0;
   state.count = 0;
-  state.debtOrbs = 0;
 
   return { earned, tierChanged, newTier, newState, lockResult };
 }
 
-// Reset transient day state and repopulate the room with 10 fresh orbs.
+// Reset transient day state and repopulate the room with fresh ring orbs.
 export function beginNewDay() {
   state.count = 0;
-  state.debtOrbs = 0;
   state.userData.currentCount = 0;
-  state.userData.currentDebtOrbs = 0;
-  orbs.spawnOrbs(10);
+  orbs.spawnRingOrbs(state.userData.dailyMax);
   setAvatarState(state.userData.currentState, false);
   coins.updateBagDisplay();
 }
 
 // Animated manual EOD (night window -> confirm, or test Force EOD).
 export async function runManualEOD() {
-  const remaining = orbs.normalOrbCount();
+  const remaining = orbs.ringOrbCount();
   await orbs.absorbAllToAvatar();
 
   const summary = await finalizeDay({ isMissed: false, remainingOrbs: remaining });
@@ -167,7 +163,7 @@ export async function simulateMissedDay() {
 
 // Test helper: advance the internal date by one day via a silent EOD.
 export async function advanceOneDay() {
-  await finalizeDay({ isMissed: true, remainingOrbs: orbs.normalOrbCount() });
+  await finalizeDay({ isMissed: true, remainingOrbs: orbs.ringOrbCount() });
   await db.saveUserData(state.uid, state.userData);
   beginNewDay();
 }

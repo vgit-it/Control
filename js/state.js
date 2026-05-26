@@ -7,9 +7,7 @@ export const state = {
   userData: null, // mirror of users/{uid}
 
   // Transient day state (not persisted until EOD):
-  count: 0, // habit instances logged today
-  debtOrbs: 0, // red orbs currently visible
-  orbsRemaining: 10, // normal orbs still drifting in the room
+  count: 0, // habit instances logged today (= consumed orbs)
 
   isOnline: true,
   offlineSim: false, // test-mode forced offline
@@ -33,7 +31,6 @@ export function defaultUserData(overrides = {}) {
     currentDay: 1, // internal day counter
     currentDate: null, // ISO date of the in-progress day
     currentCount: 0, // instances logged so far on the in-progress day
-    currentDebtOrbs: 0, // debt orbs on the in-progress day
     lastEODDate: null, // ISO date of the last completed (or caught-up) day
     onboardingComplete: false,
     ...overrides,

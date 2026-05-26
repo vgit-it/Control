@@ -4,7 +4,7 @@ import { state } from "./state.js";
 import { timeOfDay, isNight } from "./util.js";
 import { getCurrentBaseline } from "./baseline.js";
 import { calculateEODCoins } from "./coins.js";
-import { normalOrbCount } from "./orbs.js";
+import { ringOrbCount } from "./orbs.js";
 import { confirmModal, showOverlay, hideOverlay, el } from "./ui.js";
 import { runManualEOD } from "./eod.js";
 
@@ -91,7 +91,7 @@ async function onWindowTap() {
 
 // Day preview overlay: count + coins always; delta only post-baseline.
 export function showDayPreview() {
-  const remaining = normalOrbCount();
+  const remaining = ringOrbCount();
   const coinsToday = calculateEODCoins(remaining);
 
   const preview = el("div", "preview");

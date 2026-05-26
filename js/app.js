@@ -126,7 +126,6 @@ async function startApp() {
 
   // Restore in-progress counts.
   state.count = u.currentCount || 0;
-  state.debtOrbs = u.currentDebtOrbs || 0;
 
   await eod.loadDaysCache();
 
@@ -134,7 +133,6 @@ async function startApp() {
   const missed = await eod.checkMissedEODs();
   if (missed > 0) {
     state.count = state.userData.currentCount || 0;
-    state.debtOrbs = state.userData.currentDebtOrbs || 0;
   }
 
   showScreen("main");
@@ -151,9 +149,10 @@ async function startApp() {
 // Rebuild the room to reflect the current in-progress day's progress.
 function restoreRoom() {
   const u = state.userData;
-  const remaining = Math.max(0, u.dailyMax - state.count);
-  orbs.spawnOrbs(remaining);
-  for (let i = 0; i < (state.debtOrbs || 0); i++) orbs.spawnDebtOrb();
+  const ringCount = Math.max(0, u.dailyMax - state.count);
+  const consumedCount = Math.min(state.count, u.dailyMax);
+  orbs.spawnRingOrbs(ringCount);
+  orbs.spawnConsumedOrbs(consumedCount);
   setAvatarState(u.currentState, false);
   coins.updateBagDisplay();
 }

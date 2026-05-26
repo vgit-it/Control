@@ -8,7 +8,7 @@ import { lerp, randRange, randInt } from "./util.js";
 const ORB_SRC = "ImageUpload/Orb.png";
 const DRIFT = 0.012;           // lerp factor for consumed orb idle drift
 const RING_SPEED = 0.25;       // radians/second (~25 s per full orbit)
-const RING_BASE_SCALE = 0.55;  // ring orbs appear smaller (at background depth)
+const RING_BASE_SCALE = 0.385; // ring orbs: 55% * 0.7 (30% smaller than previous)
 const NEAR_SCALE = 1.35;       // zoom-toward-screen peak scale
 
 let ringLayer;       // #orb-layer, z-index 8  — ring orbs live here
@@ -30,14 +30,14 @@ function rectOf(container) {
   return container.getBoundingClientRect();
 }
 
-// Circle center at 2/3 height of avatar, radius = half avatar width.
+// Circle center at 1/3 height of avatar, radius = 35% of avatar width (half * 0.7).
 function getCircleParams() {
   const layerRect = rectOf(ringLayer);
   const av = document.getElementById("avatar-container").getBoundingClientRect();
   return {
     cx: av.left + av.width / 2 - layerRect.left,
-    cy: av.top + av.height * (2 / 3) - layerRect.top,
-    radius: av.width / 2,
+    cy: av.top + av.height * (1 / 3) - layerRect.top,
+    radius: av.width * 0.35,
   };
 }
 

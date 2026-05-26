@@ -149,10 +149,16 @@ async function startApp() {
 // Rebuild the room to reflect the current in-progress day's progress.
 function restoreRoom() {
   const u = state.userData;
-  const ringCount = Math.max(0, u.dailyMax - state.count);
-  const consumedCount = Math.min(state.count, u.dailyMax);
-  orbs.spawnRingOrbs(ringCount, u.dailyMax);
-  orbs.spawnConsumedOrbs(consumedCount);
+  const orbLevels = u.orbLevels?.length > 0 ? u.orbLevels : [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+  const totalOrbs = orbLevels.length;
+  const consumedCount = Math.min(state.count, totalOrbs);
+  const consumedLevels = orbLevels.slice(0, consumedCount);
+  const ringLevels = orbLevels.slice(consumedCount);
+  const level1Total = orbLevels.filter((l) => l === 1).length;
+  const spentCount = 10 - totalOrbs;
+  orbs.spawnRingOrbs(ringLevels, level1Total);
+  orbs.spawnConsumedOrbs(consumedLevels);
+  if (spentCount > 0) orbs.spawnSpentOrbs(spentCount);
   setAvatarState(u.currentState, false);
   coins.updateBagDisplay();
 }

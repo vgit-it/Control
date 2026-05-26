@@ -1,9 +1,9 @@
-// End-of-day orchestration (PRD section 7). Handles the animated manual EOD,
+// End-of-day orchestration. Handles the animated manual EOD,
 // silent missed-day catch-up, and "begin new day". A module-level cache of all
 // day records is kept so baseline/recalibration math stays consistent across a
 // multi-day catch-up without repeated reads.
 
-import { state, threshold } from "./state.js";
+import { state } from "./state.js";
 import * as db from "./db.js";
 import * as orbs from "./orbs.js";
 import * as coins from "./coins.js";
@@ -16,14 +16,15 @@ import { checkBaselineLock, checkDrift, rollingAverage, getCurrentBaseline } fro
 import { checkRecalibration } from "./recalibration.js";
 import { isoDate, addDays } from "./util.js";
 
+const TOTAL_ORBS = 10;
+
 let daysCache = []; // all day records, oldest -> newest
 
 export async function loadDaysCache() {
   daysCache = await db.getAllDays(state.uid);
 }
 
-// Count of the most recent non-missed day (for the post-baseline intra-day
-// warning). Returns null if there are no non-missed days yet.
+// Count of the most recent non-missed day (for the post-baseline intra-day warning).
 export function lastNonMissedCount() {
   for (let i = daysCache.length - 1; i >= 0; i--) {
     if (!daysCache[i].isMissed) return daysCache[i].count;
@@ -31,38 +32,46 @@ export function lastNonMissedCount() {
   return null;
 }
 
-// Core: finalize the current in-progress day, advance the counters. Mutates
-// state.userData but does NOT touch the DOM beyond the avatar/bag updates that
-// the manual path explicitly re-applies. Returns a summary for the caller.
-async function finalizeDay({ isMissed, remainingOrbs }) {
+// Compute the orb level array for the next day based on surviving orb levels.
+function computeNextOrbLevels(survivingOrbLevels, count, dailyMax) {
+  const overLimit = Math.max(0, count - dailyMax);
+  const nextTotal = overLimit > 0 ? Math.max(5, TOTAL_ORBS - overLimit) : TOTAL_ORBS;
+
+  if (survivingOrbLevels.length === 0) {
+    return Array(nextTotal).fill(1);
+  }
+  // Promote each surviving orb by 1 level (cap at 3).
+  const promoted = survivingOrbLevels.map((l) => Math.min(l + 1, 3));
+  const fill = Math.max(0, nextTotal - promoted.length);
+  return [...Array(fill).fill(1), ...promoted].sort((a, b) => a - b);
+}
+
+// Core: finalize the current in-progress day, advance the counters.
+// survivingOrbLevels: array of levels for ring orbs still alive at EOD.
+async function finalizeDay({ isMissed, survivingOrbLevels }) {
   const u = state.userData;
   const date = u.currentDate;
   const count = state.count;
   const baselineAtTime = getCurrentBaseline();
-  const dailyMaxAtTime = u.dailyMax; // snapshot before recalibration mutates it
-  const earned = isMissed ? 0 : coins.calculateEODCoins(remainingOrbs);
+  const dailyMaxAtTime = u.dailyMax;
+  const earned = isMissed ? 0 : coins.calculateEODCoins(survivingOrbLevels);
 
   // Provisional record for baseline/recalibration math.
   const provisional = { date, count, isMissed };
   daysCache.push(provisional);
 
-  // Non-missed completion counter (used to detect baseline lock window).
   if (!isMissed) u.nonMissedDaysCompleted = (u.nonMissedDaysCompleted || 0) + 1;
 
-  // Coins (manual day only).
   if (!isMissed && earned > 0) {
     u.lifetimeCoins = (u.lifetimeCoins || 0) + earned;
   }
 
-  // Bag tier re-evaluation.
   const newTier = coins.evaluateBagTier(u.lifetimeCoins);
   const tierChanged = newTier !== u.bagTier;
   u.bagTier = newTier;
 
-  // Baseline lock check (PRD 7.2 step 7) — locked value used immediately below.
   const lockResult = checkBaselineLock(daysCache);
 
-  // State re-evaluation (PRD 7.2 step 8).
   const baselineForEval = getCurrentBaseline();
   const avg = rollingAverage(daysCache, 3);
   let newState = u.currentState;
@@ -73,11 +82,16 @@ async function finalizeDay({ isMissed, remainingOrbs }) {
   }
   u.currentState = newState;
 
-  // Drift + recalibration (post-baseline / 3-day windows).
   checkDrift(daysCache);
   checkRecalibration(daysCache);
 
-  // Write the full day record.
+  // Compute next day's orb levels and store in userData before beginNewDay runs.
+  u.orbLevels = computeNextOrbLevels(
+    isMissed ? [] : survivingOrbLevels,
+    count,
+    u.dailyMax
+  );
+
   const record = {
     date,
     count,
@@ -86,12 +100,11 @@ async function finalizeDay({ isMissed, remainingOrbs }) {
     dailyMaxAtTime,
     baselineAtTime,
     stateAtEOD: newState,
+    survivingOrbLevels: isMissed ? [] : survivingOrbLevels,
   };
-  // replace provisional with full record in cache
   daysCache[daysCache.length - 1] = record;
   await db.saveDayRecord(state.uid, date, record);
 
-  // Advance counters.
   u.lastEODDate = date;
   u.currentDate = addDays(date, 1);
   u.currentDay = (u.currentDay || 1) + 1;
@@ -101,21 +114,29 @@ async function finalizeDay({ isMissed, remainingOrbs }) {
   return { earned, tierChanged, newTier, newState, lockResult };
 }
 
-// Reset transient day state and repopulate the room with fresh ring orbs.
+// Reset transient day state and repopulate the room with the next day's orbs.
 export function beginNewDay() {
   state.count = 0;
   state.userData.currentCount = 0;
-  orbs.spawnRingOrbs(state.userData.dailyMax);
+
+  const orbLevels = state.userData.orbLevels;
+  const level1Total = orbLevels.filter((l) => l === 1).length;
+  const spentCount = TOTAL_ORBS - orbLevels.length;
+
+  orbs.spawnRingOrbs(orbLevels, level1Total);
+  if (spentCount > 0) orbs.spawnSpentOrbs(spentCount);
+
   setAvatarState(state.userData.currentState, false);
   coins.updateBagDisplay();
 }
 
 // Animated manual EOD (night window -> confirm, or test Force EOD).
 export async function runManualEOD() {
-  const remaining = orbs.ringOrbCount();
+  // Capture surviving orb levels BEFORE absorption clears the ring arrays.
+  const survivingOrbLevels = orbs.getRingOrbLevels();
   await orbs.absorbAllToAvatar();
 
-  const summary = await finalizeDay({ isMissed: false, remainingOrbs: remaining });
+  const summary = await finalizeDay({ isMissed: false, survivingOrbLevels });
 
   if (summary.earned > 0) {
     coins.animateCoinArc(summary.earned);
@@ -127,23 +148,20 @@ export async function runManualEOD() {
 
   await db.saveUserData(state.uid, state.userData);
 
-  // small beat so coin/state animations are visible before the room refills
   await new Promise((r) => setTimeout(r, 900));
   beginNewDay();
   return summary;
 }
 
 // Silent catch-up for every calendar day that elapsed without a manual EOD.
-// Returns the number of missed days processed.
 export async function checkMissedEODs() {
   const u = state.userData;
   const today = isoDate();
   let processed = 0;
 
-  // Guard against runaway loops on bad data.
   let safety = 0;
   while (u.currentDate && u.currentDate < today && safety < 3650) {
-    await finalizeDay({ isMissed: true, remainingOrbs: 0 });
+    await finalizeDay({ isMissed: true, survivingOrbLevels: [] });
     processed += 1;
     safety += 1;
   }
@@ -156,14 +174,14 @@ export async function checkMissedEODs() {
 
 // Test helper: end the current day as missed, then begin a fresh one.
 export async function simulateMissedDay() {
-  await finalizeDay({ isMissed: true, remainingOrbs: 0 });
+  await finalizeDay({ isMissed: true, survivingOrbLevels: [] });
   await db.saveUserData(state.uid, state.userData);
   beginNewDay();
 }
 
 // Test helper: advance the internal date by one day via a silent EOD.
 export async function advanceOneDay() {
-  await finalizeDay({ isMissed: true, remainingOrbs: orbs.ringOrbCount() });
+  await finalizeDay({ isMissed: true, survivingOrbLevels: [] });
   await db.saveUserData(state.uid, state.userData);
   beginNewDay();
 }

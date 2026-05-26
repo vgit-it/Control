@@ -16,6 +16,7 @@ export const TEST_SEED = {
   onboardingEstimate: 20,
   dailyMax: 20,
   displayName: "Test",
+  orbLevels: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 };
 
 async function persist() {

@@ -1,13 +1,15 @@
 // Coin system (PRD section 11). EOD earnings, lifetime total, bag tiers.
 
-import { state, threshold } from "./state.js";
+import { state } from "./state.js";
 
 const BAG_SRC = (tier) => `ImageUpload/Bag_Tier${tier}.png`;
 
-// EOD coins for a manual day: remaining_orbs * threshold * cost_per_instance.
-export function calculateEODCoins(remainingOrbs) {
-  const t = threshold();
-  return Math.round(remainingOrbs * t * state.userData.costPerInstance);
+// EOD coins: sum of each surviving orb's level-based value.
+// Level 1 = 1.0×, Level 2 = 1.25×, Level 3 = 1.5× costPerInstance.
+export function calculateEODCoins(survivingOrbLevels) {
+  const base = state.userData.costPerInstance;
+  const mult = [0, 1.0, 1.25, 1.5];
+  return Math.round(survivingOrbLevels.reduce((s, l) => s + base * (mult[l] ?? 1.0), 0));
 }
 
 // Lifetime coins -> bag tier 1..5 (PRD section 11).
